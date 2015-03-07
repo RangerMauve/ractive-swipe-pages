@@ -1,0 +1,44 @@
+{
+  "name": "ractive-swipe-pages",
+  "version": "0.0.0",
+  "description": "Ractive component for swiping between pages",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "browserify example/index.js > example/bundle.js",
+    "watch-example": "watchify example/index.js -o example/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/RangerMauve/ractive-swipe-pages.git"
+  },
+  "keywords": [
+    "ractive",
+    "component",
+    "page",
+    "swipe",
+    "panel",
+    "drag"
+  ],
+  "author": "rangermauve",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RangerMauve/ractive-swipe-pages/issues"
+  },
+  "homepage": "https://github.com/RangerMauve/ractive-swipe-pages",
+  "dependencies": {
+    "brfs": "^1.4.0",
+    "hammerjs": "^2.0.4",
+    "insert-css": "^0.2.0",
+    "ractive": "^0.6.1",
+    "ractive-touch": "^0.4.0"
+  },
+  "devDependencies": {
+    "browserify": "^9.0.3",
+    "uglify": "^0.1.1",
+    "watchify": "^2.4.0"
+  },
+  "browserify": {
+    "transform": ["brfs"]
+  }
+}

@@ -1,0 +1,16 @@
+html {
+	font-family: Helvetica;
+}
+.main-container {
+	width: 400px;
+	height: 500px;
+	border: 1px solid black;
+	margin: 0 auto;
+}
+.page {
+	margin: 0.5em;
+	padding: 1em;
+	font-size: 2em;
+	background: black;
+	color: white;
+}

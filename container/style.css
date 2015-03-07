@@ -1,0 +1,19 @@
+.sp-main-container {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.sp-sub-container {
+	display: flex;
+	flex-direction: row;
+	flex: 1;
+	align-items: stretch;
+	transform: translateX(0px);
+}
+.sp-returning {
+	transition: transform 200ms;
+}
