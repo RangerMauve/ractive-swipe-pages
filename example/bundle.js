@@ -1,11 +1,12 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\container\\index.js":[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 var insert = require("insert-css");
+var getSize = require("get-size");
 var Ractive = require("ractive");
 require('ractive-touch');
 
-var template = "<div class=\"sp-main-container {{class}}\">\n\t<div class=\"sp-sub-container {{#if returning}}sp-returning{{/if}}\" style=\"width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset}}transform: translateX({{offset}}px);{{/if}}\" on-pan=\"move(event)\" on-panend=\"stop(event)\">\n\t\t{{yield}}\n\t</div>\n</div>\n";
-var style = ".sp-main-container {\n\t-webkit-user-select: none;\n\t-moz-user-select: none;\n\t-ms-user-select: none;\n\tuser-select: none;\n\toverflow: hidden;\n\tdisplay: flex;\n\tflex-direction: column;\n}\n.sp-sub-container {\n\tdisplay: flex;\n\tflex-direction: row;\n\tflex: 1;\n\talign-items: stretch;\n\ttransform: translateX(0px);\n}\n.sp-returning {\n\ttransition: transform 200ms;\n}\n";
+var template = "<div class=\"sp-main-container {{class}}\">\r\n\t<div class=\"sp-sub-container {{#if returning}}sp-returning{{/if}}\" style=\"width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset && !haschanged}}transform: translateX({{offset}}px);{{/if}}\" on-pan=\"move(event)\" on-panend=\"stop(event)\">\r\n\t\t{{yield}}\r\n\t</div>\r\n</div>\r\n";
+var style = ".sp-main-container {\r\n\t-webkit-user-select: none;\r\n\t-moz-user-select: none;\r\n\t-ms-user-select: none;\r\n\tuser-select: none;\r\n\toverflow: hidden;\r\n\tdisplay: flex;\r\n\tflex-direction: column;\r\n}\r\n.sp-sub-container {\r\n\tdisplay: flex;\r\n\tflex-direction: row;\r\n\tflex: 1;\r\n\talign-items: stretch;\r\n\tmargin-left: 0px;\r\n\ttransform: translateX(0px);\r\n}\r\n.sp-returning {\r\n\ttransition: transform 200ms;\r\n}\r\n";
 
 insert(style);
 
@@ -17,23 +18,60 @@ module.exports = Ractive.extend({
 		pages: 0,
 		page: 0,
 		offset: 0,
-		returning: false
+		returning: false,
+		haschanged: false
 	},
 	move: function (event) {
 		var data = event.original;
 		var delta = data.deltaX;
 		this.set("returning", false);
 		this.set("offset", data.deltaX);
-		console.log("Setting offset to", delta, "now", this.get("offset"));
+		if (!this.get("haschanged"))
+			this.checkOffset();
+	},
+	checkOffset: function () {
+		var main_width = this.getWidth();
+		var offset = this.get("offset");
+		var percent = Math.abs(offset / main_width / 2 * 100);
+		console.log("Checked offset", offset, main_width, percent + "%");
+		if (percent > 40) {
+			if (offset > 0) this.prevPage();
+			else this.nextPage();
+		}
+	},
+	getWidth: function () {
+		var main_container = this.find(".sp-main-container");
+		var main_width = getSize(main_container).width;
+		return main_width;
+	},
+	prevPage: function () {
+		var page = this.get("page");
+		var offset = this.get("offset");
+		var width = this.getWidth();
+		if (!page) return;
+
+		this.set("page", page - 1);
+		this.set("offset", -offset);
+		this.set("haschanged", true);
+	},
+	nextPage: function () {
+		var page = this.get("page");
+		var pages = this.get("pages");
+		if (page >= (pages - 1)) return;
+
+		this.set("page", page + 1);
+		this.set("offset", 0);
+		this.set("haschanged", true);
 	},
 	stop: function (event) {
 		console.log("Stopping", event.original);
 		this.set("returning", true);
 		this.set("offset", 0);
+		this.set("haschanged", false);
 	}
 });
 
-},{"insert-css":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\insert-css\\index.js","ractive":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js","ractive-touch":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive-touch\\index.js"}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\example\\index.js":[function(require,module,exports){
+},{"get-size":4,"insert-css":7,"ractive":9,"ractive-touch":8}],2:[function(require,module,exports){
 var Ractive = require("ractive");
 
 require("../");
@@ -49,7 +87,7 @@ new Ractive({
 	template: template
 });
 
-},{"../":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\index.js","ractive":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js"}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\index.js":[function(require,module,exports){
+},{"../":3,"ractive":9}],3:[function(require,module,exports){
 var Ractive = require("ractive");
 
 var SPPage = require("./page");
@@ -63,7 +101,316 @@ module.exports = {
 	SPContainer: SPContainer
 };
 
-},{"./container":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\container\\index.js","./page":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\page\\index.js","ractive":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js"}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\hammerjs\\hammer.js":[function(require,module,exports){
+},{"./container":1,"./page":10,"ractive":9}],4:[function(require,module,exports){
+/*!
+ * getSize v1.2.2
+ * measure size of elements
+ * MIT license
+ */
+
+/*jshint browser: true, strict: true, undef: true, unused: true */
+/*global define: false, exports: false, require: false, module: false, console: false */
+
+( function( window, undefined ) {
+
+'use strict';
+
+// -------------------------- helpers -------------------------- //
+
+// get a number from a string, not a percentage
+function getStyleSize( value ) {
+  var num = parseFloat( value );
+  // not a percent like '100%', and a number
+  var isValid = value.indexOf('%') === -1 && !isNaN( num );
+  return isValid && num;
+}
+
+function noop() {}
+
+var logError = typeof console === 'undefined' ? noop :
+  function( message ) {
+    console.error( message );
+  };
+
+// -------------------------- measurements -------------------------- //
+
+var measurements = [
+  'paddingLeft',
+  'paddingRight',
+  'paddingTop',
+  'paddingBottom',
+  'marginLeft',
+  'marginRight',
+  'marginTop',
+  'marginBottom',
+  'borderLeftWidth',
+  'borderRightWidth',
+  'borderTopWidth',
+  'borderBottomWidth'
+];
+
+function getZeroSize() {
+  var size = {
+    width: 0,
+    height: 0,
+    innerWidth: 0,
+    innerHeight: 0,
+    outerWidth: 0,
+    outerHeight: 0
+  };
+  for ( var i=0, len = measurements.length; i < len; i++ ) {
+    var measurement = measurements[i];
+    size[ measurement ] = 0;
+  }
+  return size;
+}
+
+
+
+function defineGetSize( getStyleProperty ) {
+
+// -------------------------- setup -------------------------- //
+
+var isSetup = false;
+
+var getStyle, boxSizingProp, isBoxSizeOuter;
+
+/**
+ * setup vars and functions
+ * do it on initial getSize(), rather than on script load
+ * For Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=548397
+ */
+function setup() {
+  // setup once
+  if ( isSetup ) {
+    return;
+  }
+  isSetup = true;
+
+  var getComputedStyle = window.getComputedStyle;
+  getStyle = ( function() {
+    var getStyleFn = getComputedStyle ?
+      function( elem ) {
+        return getComputedStyle( elem, null );
+      } :
+      function( elem ) {
+        return elem.currentStyle;
+      };
+
+      return function getStyle( elem ) {
+        var style = getStyleFn( elem );
+        if ( !style ) {
+          logError( 'Style returned ' + style +
+            '. Are you running this code in a hidden iframe on Firefox? ' +
+            'See http://bit.ly/getsizebug1' );
+        }
+        return style;
+      };
+  })();
+
+  // -------------------------- box sizing -------------------------- //
+
+  boxSizingProp = getStyleProperty('boxSizing');
+
+  /**
+   * WebKit measures the outer-width on style.width on border-box elems
+   * IE & Firefox measures the inner-width
+   */
+  if ( boxSizingProp ) {
+    var div = document.createElement('div');
+    div.style.width = '200px';
+    div.style.padding = '1px 2px 3px 4px';
+    div.style.borderStyle = 'solid';
+    div.style.borderWidth = '1px 2px 3px 4px';
+    div.style[ boxSizingProp ] = 'border-box';
+
+    var body = document.body || document.documentElement;
+    body.appendChild( div );
+    var style = getStyle( div );
+
+    isBoxSizeOuter = getStyleSize( style.width ) === 200;
+    body.removeChild( div );
+  }
+
+}
+
+// -------------------------- getSize -------------------------- //
+
+function getSize( elem ) {
+  setup();
+
+  // use querySeletor if elem is string
+  if ( typeof elem === 'string' ) {
+    elem = document.querySelector( elem );
+  }
+
+  // do not proceed on non-objects
+  if ( !elem || typeof elem !== 'object' || !elem.nodeType ) {
+    return;
+  }
+
+  var style = getStyle( elem );
+
+  // if hidden, everything is 0
+  if ( style.display === 'none' ) {
+    return getZeroSize();
+  }
+
+  var size = {};
+  size.width = elem.offsetWidth;
+  size.height = elem.offsetHeight;
+
+  var isBorderBox = size.isBorderBox = !!( boxSizingProp &&
+    style[ boxSizingProp ] && style[ boxSizingProp ] === 'border-box' );
+
+  // get all measurements
+  for ( var i=0, len = measurements.length; i < len; i++ ) {
+    var measurement = measurements[i];
+    var value = style[ measurement ];
+    value = mungeNonPixel( elem, value );
+    var num = parseFloat( value );
+    // any 'auto', 'medium' value will be 0
+    size[ measurement ] = !isNaN( num ) ? num : 0;
+  }
+
+  var paddingWidth = size.paddingLeft + size.paddingRight;
+  var paddingHeight = size.paddingTop + size.paddingBottom;
+  var marginWidth = size.marginLeft + size.marginRight;
+  var marginHeight = size.marginTop + size.marginBottom;
+  var borderWidth = size.borderLeftWidth + size.borderRightWidth;
+  var borderHeight = size.borderTopWidth + size.borderBottomWidth;
+
+  var isBorderBoxSizeOuter = isBorderBox && isBoxSizeOuter;
+
+  // overwrite width and height if we can get it from style
+  var styleWidth = getStyleSize( style.width );
+  if ( styleWidth !== false ) {
+    size.width = styleWidth +
+      // add padding and border unless it's already including it
+      ( isBorderBoxSizeOuter ? 0 : paddingWidth + borderWidth );
+  }
+
+  var styleHeight = getStyleSize( style.height );
+  if ( styleHeight !== false ) {
+    size.height = styleHeight +
+      // add padding and border unless it's already including it
+      ( isBorderBoxSizeOuter ? 0 : paddingHeight + borderHeight );
+  }
+
+  size.innerWidth = size.width - ( paddingWidth + borderWidth );
+  size.innerHeight = size.height - ( paddingHeight + borderHeight );
+
+  size.outerWidth = size.width + marginWidth;
+  size.outerHeight = size.height + marginHeight;
+
+  return size;
+}
+
+// IE8 returns percent values, not pixels
+// taken from jQuery's curCSS
+function mungeNonPixel( elem, value ) {
+  // IE8 and has percent value
+  if ( window.getComputedStyle || value.indexOf('%') === -1 ) {
+    return value;
+  }
+  var style = elem.style;
+  // Remember the original values
+  var left = style.left;
+  var rs = elem.runtimeStyle;
+  var rsLeft = rs && rs.left;
+
+  // Put in the new values to get a computed value out
+  if ( rsLeft ) {
+    rs.left = elem.currentStyle.left;
+  }
+  style.left = value;
+  value = style.pixelLeft;
+
+  // Revert the changed values
+  style.left = left;
+  if ( rsLeft ) {
+    rs.left = rsLeft;
+  }
+
+  return value;
+}
+
+return getSize;
+
+}
+
+// transport
+if ( typeof define === 'function' && define.amd ) {
+  // AMD for RequireJS
+  define( [ 'get-style-property/get-style-property' ], defineGetSize );
+} else if ( typeof exports === 'object' ) {
+  // CommonJS for Component
+  module.exports = defineGetSize( require('desandro-get-style-property') );
+} else {
+  // browser global
+  window.getSize = defineGetSize( window.getStyleProperty );
+}
+
+})( window );
+
+},{"desandro-get-style-property":5}],5:[function(require,module,exports){
+/*!
+ * getStyleProperty v1.0.4
+ * original by kangax
+ * http://perfectionkills.com/feature-testing-css-properties/
+ * MIT license
+ */
+
+/*jshint browser: true, strict: true, undef: true */
+/*global define: false, exports: false, module: false */
+
+( function( window ) {
+
+'use strict';
+
+var prefixes = 'Webkit Moz ms Ms O'.split(' ');
+var docElemStyle = document.documentElement.style;
+
+function getStyleProperty( propName ) {
+  if ( !propName ) {
+    return;
+  }
+
+  // test standard property first
+  if ( typeof docElemStyle[ propName ] === 'string' ) {
+    return propName;
+  }
+
+  // capitalize
+  propName = propName.charAt(0).toUpperCase() + propName.slice(1);
+
+  // test vendor specific properties
+  var prefixed;
+  for ( var i=0, len = prefixes.length; i < len; i++ ) {
+    prefixed = prefixes[i] + propName;
+    if ( typeof docElemStyle[ prefixed ] === 'string' ) {
+      return prefixed;
+    }
+  }
+}
+
+// transport
+if ( typeof define === 'function' && define.amd ) {
+  // AMD
+  define( function() {
+    return getStyleProperty;
+  });
+} else if ( typeof exports === 'object' ) {
+  // CommonJS for Component
+  module.exports = getStyleProperty;
+} else {
+  // browser global
+  window.getStyleProperty = getStyleProperty;
+}
+
+})( window );
+
+},{}],6:[function(require,module,exports){
 /*! Hammer.JS - v2.0.4 - 2014-09-28
  * http://hammerjs.github.io/
  *
@@ -2528,7 +2875,7 @@ if (typeof define == TYPE_FUNCTION && define.amd) {
 
 })(window, document, 'Hammer');
 
-},{}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\insert-css\\index.js":[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var inserted = {};
 
 module.exports = function (css, options) {
@@ -2552,7 +2899,7 @@ module.exports = function (css, options) {
     }
 };
 
-},{}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive-touch\\index.js":[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 ;(function (root, factory) {
 
   if (typeof define === 'function' && define.amd) {
@@ -2836,7 +3183,7 @@ module.exports = function (css, options) {
 
 }));
 
-},{"hammerjs":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\hammerjs\\hammer.js","ractive":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js"}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js":[function(require,module,exports){
+},{"hammerjs":6,"ractive":9}],9:[function(require,module,exports){
 /*
 	ractive.js v0.6.1
 	2014-10-25 - commit 3a576eb3 
@@ -17185,7 +17532,7 @@ module.exports = function (css, options) {
 
 }( typeof window !== 'undefined' ? window : this ) );
 
-},{}],"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\page\\index.js":[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 
 var insert = require("insert-css");
 var Ractive = require("ractive");
@@ -17203,4 +17550,4 @@ module.exports = Ractive.extend({
 	}
 });
 
-},{"insert-css":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\insert-css\\index.js","ractive":"C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\node_modules\\ractive\\ractive.js"}]},{},["C:\\Users\\Mauve\\Programming\\ractive-swipe-pages\\example\\index.js"]);
+},{"insert-css":7,"ractive":9}]},{},[2]);
