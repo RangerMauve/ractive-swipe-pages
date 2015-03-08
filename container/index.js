@@ -32,7 +32,6 @@ module.exports = Ractive.extend({
 		var main_width = this.getWidth();
 		var offset = this.get("offset");
 		var percent = Math.abs(offset / main_width / 2 * 100);
-		console.log("Checked offset", offset, main_width, percent + "%");
 		if (percent > 40) {
 			if (offset > 0) this.prevPage();
 			else this.nextPage();
@@ -63,7 +62,6 @@ module.exports = Ractive.extend({
 		this.set("haschanged", true);
 	},
 	stop: function (event) {
-		console.log("Stopping", event.original);
 		this.set("returning", true);
 		this.set("offset", 0);
 		this.set("haschanged", false);
