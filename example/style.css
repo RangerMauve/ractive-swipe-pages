@@ -2,8 +2,8 @@ html {
 	font-family: Helvetica;
 }
 .main-container {
-	width: 400px;
-	height: 500px;
+	width: 80vw;
+	height: 80vh;
 	border: 1px solid black;
 	margin: 0 auto;
 }

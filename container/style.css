@@ -12,6 +12,7 @@
 	flex-direction: row;
 	flex: 1;
 	align-items: stretch;
+	margin-left: 0px;
 	transform: translateX(0px);
 }
 .sp-returning {
