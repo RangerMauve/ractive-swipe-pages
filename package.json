@@ -28,6 +28,7 @@
   "homepage": "https://github.com/RangerMauve/ractive-swipe-pages",
   "dependencies": {
     "brfs": "^1.4.0",
+    "get-size": "^1.2.2",
     "hammerjs": "^2.0.4",
     "insert-css": "^0.2.0",
     "ractive": "^0.6.1",
@@ -39,6 +40,8 @@
     "watchify": "^2.4.0"
   },
   "browserify": {
-    "transform": ["brfs"]
+    "transform": [
+      "brfs"
+    ]
   }
 }
