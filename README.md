@@ -2,6 +2,8 @@
 Ractive component for swiping between pages.
 Provides a SPContainer and SPPage component for organizing things.
 
+[Live Demo](http://rangermauve.github.io/ractive-swipe-pages/example/)
+
 ## Installing
 
 Currently, this only supports Browserify with npm. If anyone ever needs this outside of that, please open an issue and I'll add in your preferred module system.
