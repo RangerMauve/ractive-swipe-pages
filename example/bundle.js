@@ -1,11 +1,11 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 var insert = require("insert-css");
-var getSize = require("get-size");
 var Ractive = require("ractive");
+var getSize = require("bounding-client-rect");
 require('ractive-touch');
 
-var template = "<div class=\"sp-main-container {{class}}\">\r\n\t<div class=\"sp-sub-container {{#if returning}}sp-returning{{/if}}\" style=\"width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset && !haschanged}}transform: translateX({{offset}}px);{{/if}}\" on-pan=\"move(event)\" on-panend=\"stop(event)\">\r\n\t\t{{yield}}\r\n\t</div>\r\n</div>\r\n";
+var template = "<div class=\"sp-main-container {{class}}\">\r\n\t<div class=\"sp-sub-container {{#if returning}}sp-returning{{/if}}\" style=\"width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset}}transform: translateX({{offset}}px);{{/if}}\" on-pan=\"move(event)\" on-panend=\"stop(event)\">\r\n\t\t{{yield}}\r\n\t</div>\r\n</div>\r\n";
 var style = ".sp-main-container {\r\n\t-webkit-user-select: none;\r\n\t-moz-user-select: none;\r\n\t-ms-user-select: none;\r\n\tuser-select: none;\r\n\toverflow: hidden;\r\n\tdisplay: flex;\r\n\tflex-direction: column;\r\n}\r\n.sp-sub-container {\r\n\tdisplay: flex;\r\n\tflex-direction: row;\r\n\tflex: 1;\r\n\talign-items: stretch;\r\n\tmargin-left: 0px;\r\n\ttransform: translateX(0px);\r\n}\r\n.sp-returning {\r\n\ttransition: transform 200ms;\r\n}\r\n";
 
 insert(style);
@@ -24,54 +24,89 @@ module.exports = Ractive.extend({
 	move: function (event) {
 		var data = event.original;
 		var delta = data.deltaX;
-		this.set("returning", false);
-		this.set("offset", data.deltaX);
-		if (!this.get("haschanged"))
+		var change = this.get("haschanged");
+
+		if (change === "next")
+			delta += this.getSize().width;
+		if (change === "prev")
+			delta -= this.getSize().width;
+
+		this.set({
+			returning: false,
+			offset: delta,
+			position: data.center.x
+		});
+
+		if (!change)
 			this.checkOffset();
 	},
 	checkOffset: function () {
-		var main_width = this.getWidth();
+		var size = this.getSize();
 		var offset = this.get("offset");
-		var percent = Math.abs(offset / main_width / 2 * 100);
-		console.log("Checked offset", offset, main_width, percent + "%");
-		if (percent > 40) {
+
+		var width = size.width;
+		var left = size.left;
+
+		var percent = Math.abs((offset - left) / width / 2 * 100);
+		if (percent > 30) {
 			if (offset > 0) this.prevPage();
 			else this.nextPage();
 		}
 	},
-	getWidth: function () {
-		var main_container = this.find(".sp-main-container");
-		var main_width = getSize(main_container).width;
-		return main_width;
+	getSize: function () {
+		var main_container = this.getContainer();
+		return getSize(main_container);
+	},
+	getContainer: function () {
+		return this.find(".sp-main-container");
 	},
 	prevPage: function () {
 		var page = this.get("page");
-		var offset = this.get("offset");
-		var width = this.getWidth();
 		if (!page) return;
 
-		this.set("page", page - 1);
-		this.set("offset", -offset);
-		this.set("haschanged", true);
+		var offset = this.get("offset");
+		var width = this.getSize().width;
+
+		this.set({
+			"page": page - 1,
+			"offset": offset - width,
+			"haschanged": "prev"
+		});
+
+		this.fire("page", {
+			page: page + 1,
+			previous: page
+		});
 	},
 	nextPage: function () {
 		var page = this.get("page");
 		var pages = this.get("pages");
 		if (page >= (pages - 1)) return;
 
-		this.set("page", page + 1);
-		this.set("offset", 0);
-		this.set("haschanged", true);
+		var offset = this.get("offset");
+		var width = this.getSize().width;
+
+		this.set({
+			"page": page + 1,
+			"offset": offset + width,
+			"haschanged": "next"
+		});
+
+		this.fire("page", {
+			page: page + 1,
+			previous: page
+		});
 	},
 	stop: function (event) {
-		console.log("Stopping", event.original);
-		this.set("returning", true);
-		this.set("offset", 0);
-		this.set("haschanged", false);
+		this.set({
+			"returning": true,
+			"offset": 0,
+			"haschanged": false
+		});
 	}
 });
 
-},{"get-size":4,"insert-css":7,"ractive":9,"ractive-touch":8}],2:[function(require,module,exports){
+},{"bounding-client-rect":4,"insert-css":7,"ractive":9,"ractive-touch":8}],2:[function(require,module,exports){
 var Ractive = require("ractive");
 
 require("../");
@@ -80,11 +115,13 @@ window.Ractive = Ractive;
 
 console.log("Ractive components", Ractive.components);
 
-var template = "<h1>Swipe Pages Example</h1>\n<SPContainer class=\"main-container\" pages=\"4\" page=\"2\">\n\t<SPPage class=\"page\">\n\t\tHello\n\t</SPPage>\n\t<SPPage class=\"page\">\n\t\tWorld\n\t</SPPage>\n\t<SPPage class=\"page\">\n\t\tThis is a test of sorts\n\t</SPPage>\n\t<SPPage class=\"page\">\n\t\tShould be pretty easy to use\n\t</SPPage>\n</SPContainer>\n";
+var template = "<h1>Swipe Pages Example</h1>\r\n<SPContainer class=\"main-container\" pages=\"4\" page=\"2\" on-page=\"changedPage\">\r\n\t<SPPage class=\"page\">\r\n\t\tHello\r\n\t</SPPage>\r\n\t<SPPage class=\"page\">\r\n\t\tWorld\r\n\t</SPPage>\r\n\t<SPPage class=\"page\">\r\n\t\tThis is a test of sorts\r\n\t</SPPage>\r\n\t<SPPage class=\"page\">\r\n\t\tShould be pretty easy to use\r\n\t</SPPage>\r\n</SPContainer>\r\n";
 
 new Ractive({
 	el: document.querySelector("main"),
 	template: template
+}).on("changedPage", function(data){
+	console.log(data);
 });
 
 },{"../":3,"ractive":9}],3:[function(require,module,exports){
@@ -102,313 +139,122 @@ module.exports = {
 };
 
 },{"./container":1,"./page":10,"ractive":9}],4:[function(require,module,exports){
-/*!
- * getSize v1.2.2
- * measure size of elements
- * MIT license
- */
-
-/*jshint browser: true, strict: true, undef: true, unused: true */
-/*global define: false, exports: false, require: false, module: false, console: false */
-
-( function( window, undefined ) {
-
-'use strict';
-
-// -------------------------- helpers -------------------------- //
-
-// get a number from a string, not a percentage
-function getStyleSize( value ) {
-  var num = parseFloat( value );
-  // not a percent like '100%', and a number
-  var isValid = value.indexOf('%') === -1 && !isNaN( num );
-  return isValid && num;
-}
-
-function noop() {}
-
-var logError = typeof console === 'undefined' ? noop :
-  function( message ) {
-    console.error( message );
-  };
-
-// -------------------------- measurements -------------------------- //
-
-var measurements = [
-  'paddingLeft',
-  'paddingRight',
-  'paddingTop',
-  'paddingBottom',
-  'marginLeft',
-  'marginRight',
-  'marginTop',
-  'marginBottom',
-  'borderLeftWidth',
-  'borderRightWidth',
-  'borderTopWidth',
-  'borderBottomWidth'
-];
-
-function getZeroSize() {
-  var size = {
-    width: 0,
-    height: 0,
-    innerWidth: 0,
-    innerHeight: 0,
-    outerWidth: 0,
-    outerHeight: 0
-  };
-  for ( var i=0, len = measurements.length; i < len; i++ ) {
-    var measurement = measurements[i];
-    size[ measurement ] = 0;
-  }
-  return size;
-}
-
-
-
-function defineGetSize( getStyleProperty ) {
-
-// -------------------------- setup -------------------------- //
-
-var isSetup = false;
-
-var getStyle, boxSizingProp, isBoxSizeOuter;
 
 /**
- * setup vars and functions
- * do it on initial getSize(), rather than on script load
- * For Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=548397
- */
-function setup() {
-  // setup once
-  if ( isSetup ) {
-    return;
-  }
-  isSetup = true;
-
-  var getComputedStyle = window.getComputedStyle;
-  getStyle = ( function() {
-    var getStyleFn = getComputedStyle ?
-      function( elem ) {
-        return getComputedStyle( elem, null );
-      } :
-      function( elem ) {
-        return elem.currentStyle;
-      };
-
-      return function getStyle( elem ) {
-        var style = getStyleFn( elem );
-        if ( !style ) {
-          logError( 'Style returned ' + style +
-            '. Are you running this code in a hidden iframe on Firefox? ' +
-            'See http://bit.ly/getsizebug1' );
-        }
-        return style;
-      };
-  })();
-
-  // -------------------------- box sizing -------------------------- //
-
-  boxSizingProp = getStyleProperty('boxSizing');
-
-  /**
-   * WebKit measures the outer-width on style.width on border-box elems
-   * IE & Firefox measures the inner-width
-   */
-  if ( boxSizingProp ) {
-    var div = document.createElement('div');
-    div.style.width = '200px';
-    div.style.padding = '1px 2px 3px 4px';
-    div.style.borderStyle = 'solid';
-    div.style.borderWidth = '1px 2px 3px 4px';
-    div.style[ boxSizingProp ] = 'border-box';
-
-    var body = document.body || document.documentElement;
-    body.appendChild( div );
-    var style = getStyle( div );
-
-    isBoxSizeOuter = getStyleSize( style.width ) === 200;
-    body.removeChild( div );
-  }
-
-}
-
-// -------------------------- getSize -------------------------- //
-
-function getSize( elem ) {
-  setup();
-
-  // use querySeletor if elem is string
-  if ( typeof elem === 'string' ) {
-    elem = document.querySelector( elem );
-  }
-
-  // do not proceed on non-objects
-  if ( !elem || typeof elem !== 'object' || !elem.nodeType ) {
-    return;
-  }
-
-  var style = getStyle( elem );
-
-  // if hidden, everything is 0
-  if ( style.display === 'none' ) {
-    return getZeroSize();
-  }
-
-  var size = {};
-  size.width = elem.offsetWidth;
-  size.height = elem.offsetHeight;
-
-  var isBorderBox = size.isBorderBox = !!( boxSizingProp &&
-    style[ boxSizingProp ] && style[ boxSizingProp ] === 'border-box' );
-
-  // get all measurements
-  for ( var i=0, len = measurements.length; i < len; i++ ) {
-    var measurement = measurements[i];
-    var value = style[ measurement ];
-    value = mungeNonPixel( elem, value );
-    var num = parseFloat( value );
-    // any 'auto', 'medium' value will be 0
-    size[ measurement ] = !isNaN( num ) ? num : 0;
-  }
-
-  var paddingWidth = size.paddingLeft + size.paddingRight;
-  var paddingHeight = size.paddingTop + size.paddingBottom;
-  var marginWidth = size.marginLeft + size.marginRight;
-  var marginHeight = size.marginTop + size.marginBottom;
-  var borderWidth = size.borderLeftWidth + size.borderRightWidth;
-  var borderHeight = size.borderTopWidth + size.borderBottomWidth;
-
-  var isBorderBoxSizeOuter = isBorderBox && isBoxSizeOuter;
-
-  // overwrite width and height if we can get it from style
-  var styleWidth = getStyleSize( style.width );
-  if ( styleWidth !== false ) {
-    size.width = styleWidth +
-      // add padding and border unless it's already including it
-      ( isBorderBoxSizeOuter ? 0 : paddingWidth + borderWidth );
-  }
-
-  var styleHeight = getStyleSize( style.height );
-  if ( styleHeight !== false ) {
-    size.height = styleHeight +
-      // add padding and border unless it's already including it
-      ( isBorderBoxSizeOuter ? 0 : paddingHeight + borderHeight );
-  }
-
-  size.innerWidth = size.width - ( paddingWidth + borderWidth );
-  size.innerHeight = size.height - ( paddingHeight + borderHeight );
-
-  size.outerWidth = size.width + marginWidth;
-  size.outerHeight = size.height + marginHeight;
-
-  return size;
-}
-
-// IE8 returns percent values, not pixels
-// taken from jQuery's curCSS
-function mungeNonPixel( elem, value ) {
-  // IE8 and has percent value
-  if ( window.getComputedStyle || value.indexOf('%') === -1 ) {
-    return value;
-  }
-  var style = elem.style;
-  // Remember the original values
-  var left = style.left;
-  var rs = elem.runtimeStyle;
-  var rsLeft = rs && rs.left;
-
-  // Put in the new values to get a computed value out
-  if ( rsLeft ) {
-    rs.left = elem.currentStyle.left;
-  }
-  style.left = value;
-  value = style.pixelLeft;
-
-  // Revert the changed values
-  style.left = left;
-  if ( rsLeft ) {
-    rs.left = rsLeft;
-  }
-
-  return value;
-}
-
-return getSize;
-
-}
-
-// transport
-if ( typeof define === 'function' && define.amd ) {
-  // AMD for RequireJS
-  define( [ 'get-style-property/get-style-property' ], defineGetSize );
-} else if ( typeof exports === 'object' ) {
-  // CommonJS for Component
-  module.exports = defineGetSize( require('desandro-get-style-property') );
-} else {
-  // browser global
-  window.getSize = defineGetSize( window.getStyleProperty );
-}
-
-})( window );
-
-},{"desandro-get-style-property":5}],5:[function(require,module,exports){
-/*!
- * getStyleProperty v1.0.4
- * original by kangax
- * http://perfectionkills.com/feature-testing-css-properties/
- * MIT license
+ * Module dependencies.
  */
 
-/*jshint browser: true, strict: true, undef: true */
-/*global define: false, exports: false, module: false */
+var getDocument = require('get-document');
 
-( function( window ) {
+/**
+ * Module exports.
+ */
 
-'use strict';
+module.exports = getBoundingClientRect;
 
-var prefixes = 'Webkit Moz ms Ms O'.split(' ');
-var docElemStyle = document.documentElement.style;
+/**
+ * Returns the "bounding client rectangle" of the given `TextNode`,
+ * `HTMLElement`, or `Range`.
+ *
+ * @param {Node} node
+ * @return {TextRectangle}
+ * @public
+ */
 
-function getStyleProperty( propName ) {
-  if ( !propName ) {
-    return;
+function getBoundingClientRect (node) {
+  var rect = null;
+  var doc = getDocument(node);
+
+  if (node.nodeType === 3 /* TEXT_NODE */) {
+    // see: http://stackoverflow.com/a/6966613/376773
+    var range = doc.createRange();
+    range.selectNodeContents(node);
+    node = range;
   }
 
-  // test standard property first
-  if ( typeof docElemStyle[ propName ] === 'string' ) {
-    return propName;
-  }
+  if ('function' === typeof node.getBoundingClientRect) {
+    rect = node.getBoundingClientRect();
 
-  // capitalize
-  propName = propName.charAt(0).toUpperCase() + propName.slice(1);
+    if (node.startContainer && rect.left === 0 && rect.top === 0) {
+      // Range instances sometimes report all `0`s
+      // see: http://stackoverflow.com/a/6847328/376773
+      var span = doc.createElement('span');
 
-  // test vendor specific properties
-  var prefixed;
-  for ( var i=0, len = prefixes.length; i < len; i++ ) {
-    prefixed = prefixes[i] + propName;
-    if ( typeof docElemStyle[ prefixed ] === 'string' ) {
-      return prefixed;
+      // Ensure span has dimensions and position by
+      // adding a zero-width space character
+      span.appendChild(doc.createTextNode('\u200b'));
+      node.insertNode(span);
+      rect = span.getBoundingClientRect();
+
+      // Remove temp SPAN and glue any broken text nodes back together
+      var spanParent = span.parentNode;
+      spanParent.removeChild(span);
+      spanParent.normalize();
     }
+
+  }
+
+  return rect;
+}
+
+},{"get-document":5}],5:[function(require,module,exports){
+
+/**
+ * Module exports.
+ */
+
+module.exports = getDocument;
+
+// defined by w3c
+var DOCUMENT_NODE = 9;
+
+/**
+ * Returns `true` if `w` is a Document object, or `false` otherwise.
+ *
+ * @param {?} d - Document object, maybe
+ * @return {Boolean}
+ * @private
+ */
+
+function isDocument (d) {
+  return d && d.nodeType === DOCUMENT_NODE;
+}
+
+/**
+ * Returns the `document` object associated with the given `node`, which may be
+ * a DOM element, the Window object, a Selection, a Range. Basically any DOM
+ * object that references the Document in some way, this function will find it.
+ *
+ * @param {Mixed} node - DOM node, selection, or range in which to find the `document` object
+ * @return {Document} the `document` object associated with `node`
+ * @public
+ */
+
+function getDocument(node) {
+  if (isDocument(node)) {
+    return node;
+
+  } else if (isDocument(node.ownerDocument)) {
+    return node.ownerDocument;
+
+  } else if (isDocument(node.document)) {
+    return node.document;
+
+  } else if (node.parentNode) {
+    return getDocument(node.parentNode);
+
+  // Range support
+  } else if (node.commonAncestorContainer) {
+    return getDocument(node.commonAncestorContainer);
+
+  } else if (node.startContainer) {
+    return getDocument(node.startContainer);
+
+  // Selection support
+  } else if (node.anchorNode) {
+    return getDocument(node.anchorNode);
   }
 }
-
-// transport
-if ( typeof define === 'function' && define.amd ) {
-  // AMD
-  define( function() {
-    return getStyleProperty;
-  });
-} else if ( typeof exports === 'object' ) {
-  // CommonJS for Component
-  module.exports = getStyleProperty;
-} else {
-  // browser global
-  window.getStyleProperty = getStyleProperty;
-}
-
-})( window );
 
 },{}],6:[function(require,module,exports){
 /*! Hammer.JS - v2.0.4 - 2014-09-28
