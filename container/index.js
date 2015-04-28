@@ -1,7 +1,7 @@
 var fs = require("fs");
 var insert = require("insert-css");
-var getSize = require("get-size");
 var Ractive = require("ractive");
+var getSize = require("bounding-client-rect");
 require('ractive-touch');
 
 var template = fs.readFileSync(__dirname + "/template.html", "utf8");
@@ -23,47 +23,84 @@ module.exports = Ractive.extend({
 	move: function (event) {
 		var data = event.original;
 		var delta = data.deltaX;
-		this.set("returning", false);
-		this.set("offset", data.deltaX);
-		if (!this.get("haschanged"))
+		var change = this.get("haschanged");
+
+		if (change === "next")
+			delta += this.getSize().width;
+		if (change === "prev")
+			delta -= this.getSize().width;
+
+		this.set({
+			returning: false,
+			offset: delta,
+			position: data.center.x
+		});
+
+		if (!change)
 			this.checkOffset();
 	},
 	checkOffset: function () {
-		var main_width = this.getWidth();
+		var size = this.getSize();
 		var offset = this.get("offset");
-		var percent = Math.abs(offset / main_width / 2 * 100);
-		if (percent > 40) {
+
+		var width = size.width;
+		var left = size.left;
+
+		var percent = Math.abs((offset - left) / width / 2 * 100);
+		if (percent > 30) {
 			if (offset > 0) this.prevPage();
 			else this.nextPage();
 		}
 	},
-	getWidth: function () {
-		var main_container = this.find(".sp-main-container");
-		var main_width = getSize(main_container).width;
-		return main_width;
+	getSize: function () {
+		var main_container = this.getContainer();
+		return getSize(main_container);
+	},
+	getContainer: function () {
+		return this.find(".sp-main-container");
 	},
 	prevPage: function () {
 		var page = this.get("page");
-		var offset = this.get("offset");
-		var width = this.getWidth();
 		if (!page) return;
 
-		this.set("page", page - 1);
-		this.set("offset", -offset);
-		this.set("haschanged", true);
+		var offset = this.get("offset");
+		var width = this.getSize().width;
+
+		this.set({
+			"page": page - 1,
+			"offset": offset - width,
+			"haschanged": "prev"
+		});
+
+		this.fire("page", {
+			page: page + 1,
+			previous: page
+		});
 	},
 	nextPage: function () {
 		var page = this.get("page");
 		var pages = this.get("pages");
 		if (page >= (pages - 1)) return;
 
-		this.set("page", page + 1);
-		this.set("offset", 0);
-		this.set("haschanged", true);
+		var offset = this.get("offset");
+		var width = this.getSize().width;
+
+		this.set({
+			"page": page + 1,
+			"offset": offset + width,
+			"haschanged": "next"
+		});
+
+		this.fire("page", {
+			page: page + 1,
+			previous: page
+		});
 	},
 	stop: function (event) {
-		this.set("returning", true);
-		this.set("offset", 0);
-		this.set("haschanged", false);
+		this.set({
+			"returning": true,
+			"offset": 0,
+			"haschanged": false
+		});
 	}
 });

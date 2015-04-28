@@ -27,8 +27,8 @@
   },
   "homepage": "https://github.com/RangerMauve/ractive-swipe-pages",
   "dependencies": {
+    "bounding-client-rect": "^1.0.5",
     "brfs": "^1.4.0",
-    "get-size": "^1.2.2",
     "hammerjs": "^2.0.4",
     "insert-css": "^0.2.0",
     "ractive": "^0.6.1",

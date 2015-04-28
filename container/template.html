@@ -1,5 +1,5 @@
 <div class="sp-main-container {{class}}">
-	<div class="sp-sub-container {{#if returning}}sp-returning{{/if}}" style="width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset && !haschanged}}transform: translateX({{offset}}px);{{/if}}" on-pan="move(event)" on-panend="stop(event)">
+	<div class="sp-sub-container {{#if returning}}sp-returning{{/if}}" style="width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset}}transform: translateX({{offset}}px);{{/if}}" on-pan="move(event)" on-panend="stop(event)">
 		{{yield}}
 	</div>
 </div>
