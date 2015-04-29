@@ -20,7 +20,8 @@ module.exports = Ractive.extend({
 		returning: false,
 		haschanged: false
 	},
-	move: function (event) {
+	move: function () {
+		var event = this.event;
 		var data = event.original;
 		var delta = data.deltaX;
 		var change = this.get("haschanged");
@@ -96,7 +97,7 @@ module.exports = Ractive.extend({
 			previous: page
 		});
 	},
-	stop: function (event) {
+	stop: function () {
 		this.set({
 			"returning": true,
 			"offset": 0,
