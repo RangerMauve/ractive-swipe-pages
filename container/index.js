@@ -67,14 +67,16 @@ module.exports = Ractive.extend({
 		var offset = this.get("offset");
 		var width = this.getSize().width;
 
+		var new_page = page - 1;
+
 		this.set({
-			"page": page - 1,
+			"page": new_page,
 			"offset": offset - width,
 			"haschanged": "prev"
 		});
 
 		this.fire("page", {
-			page: page + 1,
+			page: new_page,
 			previous: page
 		});
 	},
@@ -86,14 +88,16 @@ module.exports = Ractive.extend({
 		var offset = this.get("offset");
 		var width = this.getSize().width;
 
+		var new_page = page + 1;
+
 		this.set({
-			"page": page + 1,
+			"page": new_page,
 			"offset": offset + width,
 			"haschanged": "next"
 		});
 
 		this.fire("page", {
-			page: page + 1,
+			page: new_page,
 			previous: page
 		});
 	},
