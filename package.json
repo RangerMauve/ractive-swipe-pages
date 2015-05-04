@@ -1,6 +1,6 @@
 {
   "name": "ractive-swipe-pages",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Ractive component for swiping between pages",
   "main": "index.js",
   "scripts": {
