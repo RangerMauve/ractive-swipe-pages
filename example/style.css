@@ -13,4 +13,5 @@ html {
 	font-size: 2em;
 	background: black;
 	color: white;
+	overflow-y: auto;
 }

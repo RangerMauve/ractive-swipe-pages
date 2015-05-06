@@ -9,6 +9,8 @@ var style = fs.readFileSync(__dirname + "/style.css", "utf8");
 
 insert(style);
 
+var offset_switch = 20;
+
 module.exports = Ractive.extend({
 	isolated: true,
 	template: template,
@@ -24,7 +26,12 @@ module.exports = Ractive.extend({
 		var event = this.event;
 		var data = event.original;
 		var delta = data.deltaX;
+		var deltaY = data.deltaY;
+
 		var change = this.get("haschanged");
+
+		if (Math.abs(deltaY) > Math.abs(delta))
+			delta = 0;
 
 		if (change === "next")
 			delta += this.getSize().width;
@@ -47,8 +54,9 @@ module.exports = Ractive.extend({
 		var width = size.width;
 		var left = size.left;
 
-		var percent = Math.abs((offset - left) / width / 2 * 100);
-		if (percent > 30) {
+		var percent = Math.abs(offset / width * 100);
+
+		if (percent > offset_switch) {
 			if (offset > 0) this.prevPage();
 			else this.nextPage();
 		}

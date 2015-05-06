@@ -1,6 +1,6 @@
 <div class="sp-main-container {{class}}">
 	<div class="sp-sub-container {{#if returning}}sp-returning{{/if}}" style="width: {{pages}}00%;margin-left: -{{page*100}}%; {{#if offset}}-webkit-transform: translateX({{offset}}px); -ms-transform: translateX({{offset}}px); transform: translateX({{offset}}px);{{/if}}"
-	on-pan="move()" on-panend="stop()">
+	on-pan="move()" on-panend="stop()" data-pan-direction="horizontal">
 		{{yield}}
 	</div>
 </div>
