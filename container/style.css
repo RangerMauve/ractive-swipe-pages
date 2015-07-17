@@ -3,7 +3,7 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-	overflow: hidden;
+	overflow-x: hidden;
 	display: -webkit-box;
 	display: -webkit-flex;
 	display: -ms-flexbox;
