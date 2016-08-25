@@ -36,6 +36,7 @@
 	-webkit-transform: translateX(0px);
 	-ms-transform: translateX(0px);
 	transform: translateX(0px);
+	min-height: 0;
 }
 .sp-returning {
 	-webkit-transition: -webkit-transform 200ms;
